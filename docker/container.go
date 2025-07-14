@@ -44,6 +44,7 @@ func (c *Client) CreateContainer(ctx context.Context, config ContainerConfig) (s
 			NanoCPUs: config.CPULimit,
 		},
 		NetworkMode: "none",
+		CapDrop:     []string{"ALL"},
 	}
 
 	resp, err := c.cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "")
@@ -131,6 +132,7 @@ func (c *Client) getLogs(ctx context.Context, containerID string) (string, strin
 	options := container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
+		// Follow:     true,
 	}
 
 	logs, err := c.cli.ContainerLogs(ctx, containerID, options)

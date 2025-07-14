@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 )
 
@@ -12,6 +13,8 @@ type Client struct {
 }
 
 type ClientInterface interface {
+	InitImages(ctx context.Context) error
+
 	Execute(ctx context.Context, fileData FileData) (stdout string, stderr string, err error)
 
 	CreateContainer(ctx context.Context, config ContainerConfig) (containerID string, err error)
@@ -42,4 +45,15 @@ func NewClient() ClientInterface {
 
 func (c *Client) Close() error {
 	return c.cli.Close()
+}
+
+func (c *Client) InitImages(ctx context.Context) error {
+	for _, data := range SupportedRuntimes {
+		_, err := c.cli.ImagePull(context.Background(), data.Image, image.PullOptions{})
+		if err != nil {
+			log.Printf("unable to pull image '%s': %v\n", data.Image, err)
+			return err
+		}
+	}
+	return nil
 }
