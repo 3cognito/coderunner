@@ -43,7 +43,7 @@ func (c *Client) CreateContainer(ctx context.Context, config ContainerConfig) (s
 			Memory:   config.MemoryLimit,
 			NanoCPUs: config.CPULimit,
 		},
-		NetworkMode: "none", //TODO: check out the different options for this.
+		NetworkMode: "none",
 	}
 
 	resp, err := c.cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "")
@@ -100,9 +100,9 @@ func (c *Client) getContainerConfigs(language string) (ContainerConfig, error) {
 		Command:    runtime.Command,
 		WorkingDir: "/app",
 		// Env:         runtime.Env,
-		MemoryLimit: 256 * 1024 * 1024, // 256 MB default
-		CPULimit:    550_000_000,       // 0.55 CPU cores in NanoCPUs (1 CPU = 1_000_000)
-		Timeout:     10,                // Default timeout: 10 seconds
+		MemoryLimit: 256 * 1024 * 1024,
+		CPULimit:    550_000_000,
+		Timeout:     10,
 	}
 
 	return config, nil
