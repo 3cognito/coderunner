@@ -12,8 +12,13 @@ type Client struct {
 }
 
 type ClientInterface interface {
+	Execute(ctx context.Context, fileData FileData) (stdout string, stderr string, err error)
+
+	CreateContainer(ctx context.Context, config ContainerConfig) (containerID string, err error)
+	RunContainer(ctx context.Context, fileData FileData, containerID string) (stdout string, stderr string, err error)
+	RemoveContainer(ctx context.Context, containerID string) error
+
 	Close() error
-	Ping(ctx context.Context) error
 }
 
 func NewClient() ClientInterface {
@@ -37,9 +42,4 @@ func NewClient() ClientInterface {
 
 func (c *Client) Close() error {
 	return c.cli.Close()
-}
-
-func (c *Client) Ping(ctx context.Context) error {
-	_, err := c.cli.Ping(ctx)
-	return err
 }
