@@ -1,11 +1,13 @@
 package docker
 
 import (
+	"3cognito/coderunner/types"
 	"3cognito/coderunner/utils"
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/pkg/stdcopy"
@@ -25,12 +27,12 @@ var (
 	ErrUnsupportedLanguage = errors.New("unsupported language")
 )
 
-type FileData struct {
-	Content  string
-	Language string
-}
+func (c *Client) CreateContainer(ctx context.Context, language string) (string, error) {
+	config, err := c.getContainerConfigs(language)
+	if err != nil {
+		return "", err
+	}
 
-func (c *Client) CreateContainer(ctx context.Context, config ContainerConfig) (string, error) {
 	containerConfig := &container.Config{
 		Image:      config.Image,
 		Cmd:        config.Command,
@@ -55,7 +57,7 @@ func (c *Client) CreateContainer(ctx context.Context, config ContainerConfig) (s
 	return resp.ID, nil
 }
 
-func (c *Client) RunContainer(ctx context.Context, fileData FileData, containerID string) (string, string, error) {
+func (c *Client) RunContainer(ctx context.Context, fileData types.FileData, containerID string) (string, string, error) {
 	if err := c.copyToContainer(ctx, fileData, containerID); err != nil {
 		return "", "", err
 	}
@@ -109,7 +111,7 @@ func (c *Client) getContainerConfigs(language string) (ContainerConfig, error) {
 	return config, nil
 }
 
-func (c *Client) copyToContainer(ctx context.Context, fileData FileData, containerID string) error {
+func (c *Client) copyToContainer(ctx context.Context, fileData types.FileData, containerID string) error {
 	runtime, err := GetRuntime(fileData.Language)
 	if err != nil {
 		return ErrUnsupportedLanguage
@@ -122,6 +124,28 @@ func (c *Client) copyToContainer(ctx context.Context, fileData FileData, contain
 
 	reader := bytes.NewReader(tarBytes)
 	if err = c.cli.CopyToContainer(ctx, containerID, "/app", reader, container.CopyToContainerOptions{}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) ResetContainer(ctx context.Context, containerID string) error {
+	if err := c.cli.ContainerKill(ctx, containerID, "SIGTERM"); err != nil {
+		log.Printf("error: failed to send SIGTERM to container %s: %v", containerID, err)
+		return err
+	}
+
+	exec, err := c.cli.ContainerExecCreate(ctx, containerID, container.ExecOptions{
+		Cmd: []string{"rm", "-rf", "/tmp/*", "/app/*"},
+	})
+	if err != nil {
+		log.Printf("error: failed to create exec command in container %s: %v", containerID, err)
+		return err
+	}
+
+	if err := c.cli.ContainerExecStart(ctx, exec.ID, container.ExecStartOptions{}); err != nil {
+		log.Printf("error: failed to start exec command in container %s: %v", containerID, err)
 		return err
 	}
 
