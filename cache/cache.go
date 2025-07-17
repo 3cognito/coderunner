@@ -1,16 +1,13 @@
 package cache
 
-import "errors"
-
-type ExecutionOutput struct {
-	Stdout string
-	Stderr string
-	Err    string
-}
+import (
+	"3cognito/coderunner/types"
+	"errors"
+)
 
 type CacheInterface interface {
-	Get(key string) (ExecutionOutput, error)
-	Set(key string, output ExecutionOutput)
+	Get(key string) (types.ExecutionOutput, error)
+	Set(key string, output types.ExecutionOutput)
 }
 
 type LRUCache struct {
@@ -30,15 +27,15 @@ func NewLRUCache(cap int) CacheInterface {
 	}
 }
 
-func (c *LRUCache) Get(key string) (ExecutionOutput, error) {
+func (c *LRUCache) Get(key string) (types.ExecutionOutput, error) {
 	if node, exists := c.entries[key]; exists {
 		c.list.MovetoFront(node)
 		return node.Value, nil
 	}
-	return ExecutionOutput{}, errors.New("key not found")
+	return types.ExecutionOutput{}, errors.New("key not found")
 }
 
-func (c *LRUCache) Set(key string, value ExecutionOutput) {
+func (c *LRUCache) Set(key string, value types.ExecutionOutput) {
 	if node, exists := c.entries[key]; exists {
 		node.Value = value
 		c.list.MovetoFront(node)

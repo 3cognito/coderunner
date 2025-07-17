@@ -1,15 +1,16 @@
 package cache
 
 import (
+	"3cognito/coderunner/types"
 	"testing"
 )
 
 func TestLRUCache_SetAndGet(t *testing.T) {
 	cache := NewLRUCache(2)
 
-	out1 := ExecutionOutput{Stdout: "One", Stderr: "", Err: ""}
-	out2 := ExecutionOutput{Stdout: "Two", Stderr: "", Err: ""}
-	out3 := ExecutionOutput{Stdout: "Three", Stderr: "", Err: ""}
+	out1 := types.ExecutionOutput{Stdout: "One", Stderr: ""}
+	out2 := types.ExecutionOutput{Stdout: "Two", Stderr: ""}
+	out3 := types.ExecutionOutput{Stdout: "Three", Stderr: ""}
 
 	cache.Set("a", out1)
 	cache.Set("b", out2)
@@ -39,8 +40,8 @@ func TestLRUCache_SetAndGet(t *testing.T) {
 
 func TestLRUCache_OverwriteValue(t *testing.T) {
 	cache := NewLRUCache(2)
-	out1 := ExecutionOutput{Stdout: "Old"}
-	out2 := ExecutionOutput{Stdout: "New"}
+	out1 := types.ExecutionOutput{Stdout: "Old"}
+	out2 := types.ExecutionOutput{Stdout: "New"}
 
 	cache.Set("x", out1)
 	cache.Set("x", out2)

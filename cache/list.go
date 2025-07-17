@@ -1,8 +1,10 @@
 package cache
 
+import "3cognito/coderunner/types"
+
 type Node struct {
 	Key   string
-	Value ExecutionOutput
+	Value types.ExecutionOutput
 	Prev  *Node
 	Next  *Node
 }
