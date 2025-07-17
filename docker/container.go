@@ -131,9 +131,17 @@ func (c *Client) copyToContainer(ctx context.Context, fileData types.FileData, c
 }
 
 func (c *Client) ResetContainer(ctx context.Context, containerID string) error {
-	if err := c.cli.ContainerKill(ctx, containerID, "SIGTERM"); err != nil {
-		log.Printf("error: failed to send SIGTERM to container %s: %v", containerID, err)
+	res, err := c.cli.ContainerInspect(ctx, containerID)
+	if err != nil {
 		return err
+	}
+
+	if !res.State.Running {
+		log.Printf("container %s is not running, restarting it for reset...", containerID)
+		if err := c.cli.ContainerStart(ctx, containerID, container.StartOptions{}); err != nil {
+			log.Printf("failed to start container %s: %v", containerID, err)
+			return err
+		}
 	}
 
 	exec, err := c.cli.ContainerExecCreate(ctx, containerID, container.ExecOptions{
