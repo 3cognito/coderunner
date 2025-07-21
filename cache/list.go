@@ -33,6 +33,10 @@ func (l *DoublyLinkedList) MovetoFront(node *Node) {
 }
 
 func (l *DoublyLinkedList) Remove(node *Node) {
+	if node == nil {
+		return 
+	}
+	
 	if node.Prev != nil {
 		node.Prev.Next = node.Next
 	} else {

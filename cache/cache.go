@@ -3,6 +3,7 @@ package cache
 import (
 	"3cognito/coderunner/types"
 	"errors"
+	"sync"
 )
 
 type CacheInterface interface {
@@ -14,6 +15,7 @@ type LRUCache struct {
 	capacity int
 	list     *DoublyLinkedList
 	entries  map[string]*Node
+	mu       sync.Mutex
 }
 
 func NewLRUCache(cap int) CacheInterface {
@@ -28,14 +30,22 @@ func NewLRUCache(cap int) CacheInterface {
 }
 
 func (c *LRUCache) Get(key string) (types.ExecutionOutput, error) {
-	if node, exists := c.entries[key]; exists {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	node, exists := c.entries[key]
+	if exists {
 		c.list.MovetoFront(node)
 		return node.Value, nil
 	}
+
 	return types.ExecutionOutput{}, errors.New("key not found")
 }
 
 func (c *LRUCache) Set(key string, value types.ExecutionOutput) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	if node, exists := c.entries[key]; exists {
 		node.Value = value
 		c.list.MovetoFront(node)

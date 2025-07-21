@@ -2,6 +2,8 @@ package cache
 
 import (
 	"3cognito/coderunner/types"
+	"strconv"
+	"sync"
 	"testing"
 )
 
@@ -97,4 +99,34 @@ func TestDoublyLinkedList_BasicOperations(t *testing.T) {
 	if removed != n2 {
 		t.Errorf("expected tail to be node2, got %v", removed.Key)
 	}
+}
+
+
+func TestLRUCacheConcurrency(t *testing.T) {
+	c := NewLRUCache(10)
+	var wg sync.WaitGroup
+	
+	for i := range 100 {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			key := "key" + strconv.Itoa(i%15) 
+			output := types.ExecutionOutput{
+				Stdout: "stdout" + strconv.Itoa(i),
+				Stderr: "stderr" + strconv.Itoa(i),
+			}
+			c.Set(key, output)
+		}(i)
+	}
+
+	for i := range 100 {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			key := "key" + strconv.Itoa(i%15)
+			_, _ = c.Get(key) 
+		}(i)
+	}
+
+	wg.Wait()
 }
