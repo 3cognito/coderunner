@@ -4,6 +4,7 @@ import (
 	"3cognito/coderunner/cache"
 	"3cognito/coderunner/docker"
 	"3cognito/coderunner/types"
+	"3cognito/coderunner/utils"
 	"context"
 )
 
@@ -27,7 +28,9 @@ func NewExecutor(pool ContainerPoolInterface, client docker.ClientInterface, cac
 
 func (e *Executor) Execute(ctx context.Context, fileData types.FileData) (types.ExecutionOutput, error) {
 	var output types.ExecutionOutput
-	if result, err := e.cache.Get(fileData.Content); err == nil {
+	cacheKey := utils.HashData(fileData)
+
+	if result, err := e.cache.Get(cacheKey); err == nil {
 		return result, nil
 	}
 
@@ -44,7 +47,7 @@ func (e *Executor) Execute(ctx context.Context, fileData types.FileData) (types.
 	output.Stdout = stdout
 	output.Stderr = stderr
 
-	go e.cache.Set(fileData.Content, output)
+	go e.cache.Set(cacheKey, output)
 
 	go e.containerPool.CleanUp(ctx, containerID, fileData.Language)
 
